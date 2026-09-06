@@ -10,15 +10,17 @@
   const statusPulse = document.getElementById("statusPulse");
   const ttsAudio = document.getElementById("ttsAudio");
   const hint = document.getElementById("hint");
+  const stageCaption = document.getElementById("stageCaption");
 
-  const avatarEl = document.getElementById("avatar");
-  const mouthTalk = document.getElementById("mouthTalk");
-  const avatarHomeParent = avatarEl.parentNode;
-  const avatarHomeNextSibling = avatarEl.nextSibling;
+  const companionVisuals = () => document.querySelectorAll(".companion-visual");
+  const companionPhotos = () => document.querySelectorAll(".companion-photo");
+  const stageParticleLayer = document.getElementById("particleLayer");
+  const callParticleLayer = document.getElementById("callParticleLayer");
+
+  const styleToggle = document.getElementById("styleToggle");
 
   const callBtn = document.getElementById("callBtn");
   const callOverlay = document.getElementById("callOverlay");
-  const callAvatarSlot = document.getElementById("callAvatarSlot");
   const callStatusText = document.getElementById("callStatusText");
   const callCaption = document.getElementById("callCaption");
   const callMuteBtn = document.getElementById("callMuteBtn");
@@ -44,93 +46,73 @@
   let isSending = false;
   let inCallMode = false;
 
-  // ---------- Expressive avatar: mood, blinking, lip-sync ----------
+  // ---------- Avatar style (Human / Anthro) ----------
+
+  const STYLE_KEY = "sarah_avatar_style";
+  let avatarStyle = localStorage.getItem(STYLE_KEY) || "human";
+
+  function applyAvatarStyle(style) {
+    avatarStyle = style;
+    localStorage.setItem(STYLE_KEY, style);
+    companionPhotos().forEach((img) => {
+      img.src = `assets/sarah_${style}.jpg`;
+    });
+    styleToggle.querySelectorAll(".style-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.style === style);
+    });
+  }
+
+  styleToggle.addEventListener("click", (e) => {
+    const btn = e.target.closest(".style-btn");
+    if (btn) applyAvatarStyle(btn.dataset.style);
+  });
+
+  // ---------- Living avatar: mood aura, particles, breathing, lip-synced voice ----------
 
   function setMood(mood) {
-    if (!mood || mood === avatarEl.dataset.mood) return;
-    avatarEl.dataset.mood = mood;
-    // Restart the "reaction pop" animation every time her mood actually
-    // changes, so the shift is obvious even at a glance.
-    avatarEl.classList.remove("mood-pop");
-    void avatarEl.offsetWidth;
-    avatarEl.classList.add("mood-pop");
+    if (!mood) return;
+    companionVisuals().forEach((el) => {
+      el.dataset.mood = mood;
+    });
+    // Always play the reaction pop + particles, even if the mood label is
+    // the same as before (e.g. two excited replies in a row, or tapping her
+    // photo while already "happy") — every reaction should feel alive.
+    companionVisuals().forEach((el) => {
+      el.classList.remove("mood-pop");
+      void el.offsetWidth;
+      el.classList.add("mood-pop");
+    });
+    reactWithParticles(mood);
   }
 
-  function startBlinking() {
-    setInterval(() => {
-      avatarEl.classList.add("is-blinking");
-      setTimeout(() => avatarEl.classList.remove("is-blinking"), 140);
-    }, 2600 + Math.random() * 3200);
-  }
+  const MOOD_PARTICLES = {
+    excited: "✨",
+    happy: "💕",
+    comforting: "💜",
+    caring: "💜",
+    curious: "❔",
+  };
 
-  let audioCtx = null;
-  let analyser = null;
-  let analyserData = null;
-  let audioGraphReady = false;
-  let lipSyncRAF = null;
-  let fallbackTalkInterval = null;
-
-  function ensureAudioGraph() {
-    if (audioGraphReady) {
-      if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
-      return true;
-    }
-    try {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const source = audioCtx.createMediaElementSource(ttsAudio);
-      analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 512;
-      analyserData = new Uint8Array(analyser.frequencyBinCount);
-      source.connect(analyser);
-      analyser.connect(audioCtx.destination);
-      audioGraphReady = true;
-      return true;
-    } catch (err) {
-      console.warn("Lip-sync audio graph unavailable, using simple talk animation:", err);
-      return false;
+  function spawnParticles(layer, emoji, count) {
+    if (!layer) return;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement("span");
+      p.className = "particle";
+      p.textContent = emoji;
+      p.style.left = 40 + Math.random() * 20 + "%";
+      p.style.setProperty("--dx", Math.random() * 160 - 80 + "px");
+      p.style.setProperty("--dur", (1 + Math.random() * 0.7).toFixed(2) + "s");
+      p.style.animationDelay = (Math.random() * 0.25).toFixed(2) + "s";
+      layer.appendChild(p);
+      setTimeout(() => p.remove(), 2200);
     }
   }
 
-  function setMouthOpenness(v) {
-    mouthTalk.setAttribute("ry", (1.5 + Math.max(0, Math.min(1, v)) * 8.5).toFixed(2));
-  }
-
-  function startLipSync() {
-    avatarEl.classList.add("is-speaking");
-    if (!analyser) return;
-    const tick = () => {
-      analyser.getByteTimeDomainData(analyserData);
-      let sum = 0;
-      for (let i = 0; i < analyserData.length; i++) {
-        const v = (analyserData[i] - 128) / 128;
-        sum += v * v;
-      }
-      const rms = Math.sqrt(sum / analyserData.length);
-      setMouthOpenness(rms * 4.5);
-      lipSyncRAF = requestAnimationFrame(tick);
-    };
-    tick();
-  }
-
-  function stopLipSync() {
-    if (lipSyncRAF) cancelAnimationFrame(lipSyncRAF);
-    lipSyncRAF = null;
-    avatarEl.classList.remove("is-speaking");
-    setMouthOpenness(0);
-  }
-
-  function startFallbackTalkAnimation() {
-    avatarEl.classList.add("is-speaking");
-    fallbackTalkInterval = setInterval(() => {
-      setMouthOpenness(Math.random() * 0.9 + 0.1);
-    }, 110);
-  }
-
-  function stopFallbackTalkAnimation() {
-    if (fallbackTalkInterval) clearInterval(fallbackTalkInterval);
-    fallbackTalkInterval = null;
-    avatarEl.classList.remove("is-speaking");
-    setMouthOpenness(0);
+  function reactWithParticles(mood) {
+    const emoji = MOOD_PARTICLES[mood];
+    if (!emoji) return;
+    const layer = inCallMode ? callParticleLayer : stageParticleLayer;
+    spawnParticles(layer, emoji, 6);
   }
 
   // ---------- Status + chat log ----------
@@ -143,6 +125,7 @@
   }
 
   function setCaption(text) {
+    stageCaption.textContent = text;
     if (inCallMode) callCaption.textContent = text;
   }
 
@@ -165,7 +148,90 @@
     return bubble;
   }
 
-  // ---------- Speaking (TTS with lip-sync, browser fallback) ----------
+  // ---------- Speaking (TTS with a live voice waveform, browser fallback) ----------
+
+  let audioCtx = null;
+  let analyser = null;
+  let analyserData = null;
+  let audioGraphReady = false;
+  let waveformRAF = null;
+  let fallbackWaveformInterval = null;
+
+  function ensureAudioGraph() {
+    if (audioGraphReady) {
+      if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+      return true;
+    }
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioCtx.createMediaElementSource(ttsAudio);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 512;
+      analyserData = new Uint8Array(analyser.frequencyBinCount);
+      source.connect(analyser);
+      analyser.connect(audioCtx.destination);
+      audioGraphReady = true;
+      return true;
+    } catch (err) {
+      console.warn("Voice-reactive waveform unavailable, using a simple talk animation:", err);
+      return false;
+    }
+  }
+
+  function setSpeakingVisual(active) {
+    companionVisuals().forEach((el) => el.classList.toggle("is-speaking", active));
+  }
+
+  function setWaveformBars(intensity) {
+    document.querySelectorAll(".waveform span").forEach((bar, i) => {
+      const jitter = 0.6 + Math.sin(Date.now() / 90 + i) * 0.4;
+      bar.style.transform = `scaleY(${(0.4 + intensity * 2.2 * jitter).toFixed(2)})`;
+    });
+  }
+
+  function resetWaveformBars() {
+    document.querySelectorAll(".waveform span").forEach((bar) => {
+      bar.style.transform = "";
+    });
+  }
+
+  function startRealWaveform() {
+    setSpeakingVisual(true);
+    if (!analyser) return;
+    const tick = () => {
+      analyser.getByteTimeDomainData(analyserData);
+      let sum = 0;
+      for (let i = 0; i < analyserData.length; i++) {
+        const v = (analyserData[i] - 128) / 128;
+        sum += v * v;
+      }
+      const rms = Math.sqrt(sum / analyserData.length);
+      setWaveformBars(rms * 3.2);
+      waveformRAF = requestAnimationFrame(tick);
+    };
+    tick();
+  }
+
+  function stopRealWaveform() {
+    if (waveformRAF) cancelAnimationFrame(waveformRAF);
+    waveformRAF = null;
+    setSpeakingVisual(false);
+    resetWaveformBars();
+  }
+
+  function startFallbackWaveform() {
+    setSpeakingVisual(true);
+    fallbackWaveformInterval = setInterval(() => {
+      setWaveformBars(Math.random() * 0.5 + 0.2);
+    }, 110);
+  }
+
+  function stopFallbackWaveform() {
+    if (fallbackWaveformInterval) clearInterval(fallbackWaveformInterval);
+    fallbackWaveformInterval = null;
+    setSpeakingVisual(false);
+    resetWaveformBars();
+  }
 
   async function speak(text) {
     if (!voiceOutToggle.checked) return;
@@ -186,14 +252,14 @@
           ttsAudio.src = url;
           const graphReady = ensureAudioGraph();
           await ttsAudio.play();
-          if (graphReady) startLipSync();
-          else startFallbackTalkAnimation();
+          if (graphReady) startRealWaveform();
+          else startFallbackWaveform();
           await new Promise((resolve) => {
             ttsAudio.onended = resolve;
             ttsAudio.onerror = resolve;
           });
-          if (graphReady) stopLipSync();
-          else stopFallbackTalkAnimation();
+          if (graphReady) stopRealWaveform();
+          else stopFallbackWaveform();
           URL.revokeObjectURL(url);
           finishSpeaking();
           return;
@@ -220,13 +286,13 @@
     const voices = window.speechSynthesis.getVoices();
     const femaleVoice = voices.find((v) => /female|samantha|victoria|zira|karen/i.test(v.name));
     if (femaleVoice) utter.voice = femaleVoice;
-    utter.onstart = startFallbackTalkAnimation;
+    utter.onstart = startFallbackWaveform;
     utter.onend = () => {
-      stopFallbackTalkAnimation();
+      stopFallbackWaveform();
       finishSpeaking();
     };
     utter.onerror = () => {
-      stopFallbackTalkAnimation();
+      stopFallbackWaveform();
       finishSpeaking();
     };
     window.speechSynthesis.speak(utter);
@@ -313,6 +379,28 @@
     );
   }
 
+  // ---------- Tap-to-react: she's a companion, not a static picture ----------
+
+  const BOOP_LINES = [
+    "Hey! I felt that.",
+    "Aww, hi there.",
+    "You just wanted my attention, didn't you?",
+    "I'm right here, silly.",
+    "Careful, I might get used to that.",
+  ];
+
+  function boop() {
+    if (isSending) return;
+    const line = BOOP_LINES[Math.floor(Math.random() * BOOP_LINES.length)];
+    setMood("happy");
+    addBubble("sarah", line);
+    speak(line);
+  }
+
+  document.querySelectorAll(".companion-photo").forEach((img) => {
+    img.addEventListener("click", boop);
+  });
+
   // ---------- Voice input (Web Speech API) ----------
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognizer = null;
@@ -388,7 +476,7 @@
   function stopVoiceMode() {
     voiceMode = false;
     micBtn.classList.remove("active");
-    hint.textContent = "Tap the mic to talk hands-free, like real voice chat.";
+    hint.textContent = "Tap the mic to talk hands-free, or tap her photo to say hi.";
     setStatus("online · here for you", null);
     if (recognizer && recognizerRunning) recognizer.stop();
   }
@@ -433,7 +521,6 @@
   function startCall() {
     inCallMode = true;
     callOverlay.hidden = false;
-    callAvatarSlot.appendChild(avatarEl);
     callCaption.textContent = "\u00a0";
     micMuted = false;
     callMuteBtn.classList.remove("muted");
@@ -446,7 +533,6 @@
     inCallMode = false;
     clearTimeout(idleCheckInTimer);
     callOverlay.hidden = true;
-    avatarHomeParent.insertBefore(avatarEl, avatarHomeNextSibling);
     stopVoiceMode();
   }
 
@@ -472,7 +558,6 @@
     }
   });
 
-  startBlinking();
-  setMood("happy");
+  applyAvatarStyle(avatarStyle);
   greet();
 })();

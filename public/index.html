@@ -8,42 +8,34 @@
 </head>
 <body>
   <div class="app">
-    <aside class="sidebar">
-      <div class="avatar-card">
-        <div class="avatar" id="avatar" data-mood="happy">
-          <svg viewBox="0 0 100 100" class="avatar-face">
-            <circle cx="50" cy="50" r="48" class="avatar-ring" />
-            <circle cx="50" cy="46" r="22" fill="#ffd9c9" />
-            <path d="M28 46 a22 22 0 0 1 44 0 v6 h-8 l-4 -10 -4 6 -4 -6 -4 8 -4 -6 -4 6 -8 -4 z" fill="#7a4a2b" />
+    <section class="stage companion-visual" id="stage" data-mood="happy">
+      <div class="aura"></div>
+      <div class="particle-layer" id="particleLayer"></div>
+      <img class="companion-photo" src="assets/sarah_human.jpg" alt="Sarah" title="Say hi!" />
+      <div class="waveform" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="stage-top">
+        <span class="status-pulse" id="statusPulse"></span>
+        <span class="status-text" id="statusText">online · here for you</span>
+      </div>
+      <div class="stage-caption-wrap">
+        <p class="stage-caption" id="stageCaption">&nbsp;</p>
+      </div>
+    </section>
 
-            <path class="eyebrow eyebrow-left" d="M36 40 q5 -3 10 0" stroke="#5a3820" stroke-width="2" fill="none" stroke-linecap="round" />
-            <path class="eyebrow eyebrow-right" d="M54 40 q5 -3 10 0" stroke="#5a3820" stroke-width="2" fill="none" stroke-linecap="round" />
-
-            <circle class="eye eye-left" cx="41" cy="47" r="2.6" fill="#3a2418" />
-            <circle class="eye eye-right" cx="59" cy="47" r="2.6" fill="#3a2418" />
-            <rect class="eyelid eyelid-left" x="36.5" y="43" width="9" height="7" fill="#ffd9c9" />
-            <rect class="eyelid eyelid-right" x="54.5" y="43" width="9" height="7" fill="#ffd9c9" />
-
-            <path class="mouth mouth-neutral" d="M42 56 q8 6 16 0" stroke="#a85a4a" stroke-width="2.4" fill="none" stroke-linecap="round" />
-            <g class="mouth mouth-excited">
-              <path d="M37 54 q13 14 26 0 q-13 7 -26 0 z" fill="#7a2f28" />
-              <path d="M40.5 55.5 q9.5 5 19 0" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" />
-            </g>
-            <path class="mouth mouth-soft" d="M44 58 q6 4 12 0" stroke="#a85a4a" stroke-width="2.4" fill="none" stroke-linecap="round" />
-            <ellipse class="mouth-talk" id="mouthTalk" cx="50" cy="57" rx="7" ry="1.5" fill="#7a3b34" />
-
-            <path d="M20 44 a30 30 0 0 1 60 0" stroke="#ff7ab3" stroke-width="6" fill="none" stroke-linecap="round" />
-            <circle cx="20" cy="48" r="7" fill="#ff7ab3" />
-            <circle cx="80" cy="48" r="7" fill="#ff7ab3" />
-          </svg>
-          <span class="status-pulse" id="statusPulse"></span>
-        </div>
+    <aside class="side-panel">
+      <div class="side-header">
         <h1>Sarah</h1>
-        <p class="status-text" id="statusText">online · here for you</p>
         <button id="callBtn" class="call-btn">
           <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24 11.36 11.36 0 0 0 3.58.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.36 11.36 0 0 0 .57 3.58 1 1 0 0 1-.25 1.01l-2.2 2.2z"/></svg>
           Call Sarah
         </button>
+      </div>
+
+      <div class="style-toggle" id="styleToggle">
+        <button class="style-btn active" data-style="human" type="button">Human</button>
+        <button class="style-btn" data-style="anthro" type="button">Anthro</button>
       </div>
 
       <div class="game-context">
@@ -61,6 +53,19 @@
         </div>
       </div>
 
+      <div class="chat-log" id="chatLog"></div>
+
+      <div class="composer">
+        <button id="micBtn" class="mic-btn" title="Push to talk / toggle voice chat" aria-label="Toggle voice chat">
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/>
+          </svg>
+        </button>
+        <input id="textInput" type="text" placeholder="Say something to Sarah..." autocomplete="off" />
+        <button id="sendBtn" class="send-btn">Send</button>
+      </div>
+      <p class="hint" id="hint">Tap the mic to talk hands-free, or tap her photo to say hi.</p>
+
       <div class="settings">
         <label class="toggle-row">
           <input type="checkbox" id="voiceOutToggle" checked />
@@ -69,25 +74,17 @@
         <button id="resetBtn" class="ghost-btn">Reset conversation</button>
       </div>
     </aside>
-
-    <main class="chat-panel">
-      <div class="chat-log" id="chatLog"></div>
-
-      <div class="composer">
-        <button id="micBtn" class="mic-btn" title="Push to talk / toggle voice chat" aria-label="Toggle voice chat">
-          <svg viewBox="0 0 24 24" width="22" height="22">
-            <path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/>
-          </svg>
-        </button>
-        <input id="textInput" type="text" placeholder="Say something to Sarah..." autocomplete="off" />
-        <button id="sendBtn" class="send-btn">Send</button>
-      </div>
-      <p class="hint" id="hint">Tap the mic to talk hands-free, like real voice chat.</p>
-    </main>
   </div>
 
   <div class="call-overlay" id="callOverlay" hidden>
-    <div class="call-avatar-slot" id="callAvatarSlot"></div>
+    <div class="call-stage companion-visual" id="callStage" data-mood="happy">
+      <div class="aura"></div>
+      <div class="particle-layer" id="callParticleLayer"></div>
+      <img class="companion-photo" src="assets/sarah_human.jpg" alt="Sarah" />
+      <div class="waveform" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+    </div>
     <p class="call-status" id="callStatusText">Calling Sarah…</p>
     <p class="call-caption" id="callCaption">&nbsp;</p>
     <div class="call-controls">
