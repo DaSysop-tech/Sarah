@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import crypto from "node:crypto";
 
-import { buildSystemPrompt, generateFallbackReply } from "./persona.js";
+import { buildSystemPrompt, generateFallbackReply, classifyEmotion, pickProactiveLine } from "./persona.js";
 import { getOpenAiClient, isAiEnabled } from "./openaiClient.js";
 
 dotenv.config();
@@ -55,6 +55,10 @@ app.post("/api/chat", async (req, res) => {
 
     let reply;
     let usedAI = false;
+    // The emotion classifier runs on the user's message regardless of which
+    // path answers it, so the avatar's expression stays consistent whether
+    // Sarah is powered by the LLM or the rule-based fallback.
+    const emotion = classifyEmotion(message);
 
     const client = getOpenAiClient();
     if (client) {
@@ -76,7 +80,7 @@ app.post("/api/chat", async (req, res) => {
     }
 
     if (!reply) {
-      reply = generateFallbackReply(message, session.gameContext);
+      reply = generateFallbackReply(message, session.gameContext).reply;
     }
 
     session.history.push({ role: "assistant", content: reply });
@@ -84,7 +88,7 @@ app.post("/api/chat", async (req, res) => {
       session.history = session.history.slice(-MAX_HISTORY_MESSAGES);
     }
 
-    res.json({ sessionId: id, reply, usedAI });
+    res.json({ sessionId: id, reply, usedAI, emotion });
   } catch (err) {
     console.error("Chat endpoint error:", err);
     res.status(500).json({ error: "internal_error" });
@@ -116,6 +120,13 @@ app.post("/api/tts", async (req, res) => {
     console.error("TTS endpoint error:", err.message);
     res.status(501).json({ error: "tts_unavailable" });
   }
+});
+
+// Used during a live "call" when the user has gone quiet for a while, so
+// Sarah can proactively say something instead of just sitting there —
+// mirrors the "live/proactive" check-ins of companion call apps.
+app.get("/api/proactive-line", (req, res) => {
+  res.json({ reply: pickProactiveLine(), emotion: "caring" });
 });
 
 app.post("/api/reset", (req, res) => {

@@ -58,8 +58,14 @@ html, body {
 .avatar-ring {
   fill: #201c38;
   stroke: var(--accent);
-  stroke-width: 2;
+  stroke-width: 3;
+  transition: stroke 0.3s ease;
 }
+
+.avatar[data-mood="excited"] .avatar-ring { stroke: #ffc540; }
+.avatar[data-mood="comforting"] .avatar-ring,
+.avatar[data-mood="caring"] .avatar-ring { stroke: #7c6bff; }
+.avatar[data-mood="curious"] .avatar-ring { stroke: #45d6c9; }
 
 .status-pulse {
   position: absolute;
@@ -95,9 +101,127 @@ html, body {
 }
 
 .status-text {
-  margin: 0;
+  margin: 0 0 12px;
   color: var(--muted);
   font-size: 13px;
+}
+
+.call-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #33d17a, #1fb6a8);
+  color: #06231a;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.call-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* ---------- Expressive avatar ---------- */
+
+.eyebrow {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: center;
+  stroke-width: 2.6;
+}
+
+.eye {
+  transition: opacity 0.06s ease, transform 0.25s ease;
+  transform-origin: center;
+}
+
+.eyelid {
+  opacity: 0;
+  transition: opacity 0.05s ease;
+}
+
+.avatar.is-blinking .eyelid {
+  opacity: 1;
+}
+
+.mouth-neutral,
+.mouth-excited,
+.mouth-soft,
+.mouth-talk {
+  transition: opacity 0.15s ease;
+}
+
+.mouth-excited,
+.mouth-soft {
+  opacity: 0;
+}
+
+.mouth-talk {
+  opacity: 0;
+}
+
+/* Excited: big open grin, eyebrows shoot up, eyes widen — impossible to miss. */
+.avatar[data-mood="excited"] .mouth-neutral { opacity: 0; }
+.avatar[data-mood="excited"] .mouth-excited { opacity: 1; }
+.avatar[data-mood="excited"] .eyebrow-left { transform: translateY(-6px) rotate(-10deg); }
+.avatar[data-mood="excited"] .eyebrow-right { transform: translateY(-6px) rotate(10deg); }
+.avatar[data-mood="excited"] .eye { transform: scale(1.25); }
+
+/* Comforting / caring: soft downturned brows, gentle small mouth. */
+.avatar[data-mood="comforting"] .mouth-neutral,
+.avatar[data-mood="caring"] .mouth-neutral { opacity: 0; }
+.avatar[data-mood="comforting"] .mouth-soft,
+.avatar[data-mood="caring"] .mouth-soft { opacity: 1; }
+.avatar[data-mood="comforting"] .eyebrow-left,
+.avatar[data-mood="caring"] .eyebrow-left { transform: rotate(-18deg) translate(2px, 3px); }
+.avatar[data-mood="comforting"] .eyebrow-right,
+.avatar[data-mood="caring"] .eyebrow-right { transform: rotate(18deg) translate(-2px, 3px); }
+.avatar[data-mood="comforting"] .eye,
+.avatar[data-mood="caring"] .eye { transform: scaleY(0.8); }
+
+.avatar[data-mood="curious"] .eyebrow-left { transform: translateY(-5px) rotate(-10deg); }
+.avatar[data-mood="curious"] .eyebrow-right { transform: translateY(-1px); }
+
+.avatar.is-speaking .mouth-neutral,
+.avatar.is-speaking .mouth-excited,
+.avatar.is-speaking .mouth-soft {
+  opacity: 0;
+}
+
+.avatar.is-speaking .mouth-talk {
+  opacity: 1;
+}
+
+.avatar-face {
+  transition: filter 0.3s ease;
+}
+
+.avatar[data-mood="excited"] .avatar-face {
+  filter: drop-shadow(0 0 22px rgba(255, 196, 64, 0.65));
+}
+
+.avatar[data-mood="comforting"] .avatar-face,
+.avatar[data-mood="caring"] .avatar-face {
+  filter: drop-shadow(0 0 20px rgba(124, 107, 255, 0.6));
+}
+
+.avatar[data-mood="curious"] .avatar-face {
+  filter: drop-shadow(0 0 18px rgba(69, 214, 201, 0.55));
+}
+
+/* A quick, unmistakable "reaction pop" every time her mood changes. */
+@keyframes mood-pop {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.18) rotate(-2deg); }
+  65% { transform: scale(0.95) rotate(1deg); }
+  100% { transform: scale(1); }
+}
+
+.avatar.mood-pop {
+  animation: mood-pop 0.45s ease;
 }
 
 .game-context label,
@@ -320,4 +444,109 @@ html, body {
   .app { flex-direction: column; }
   .sidebar { width: 100%; flex-direction: row; overflow-x: auto; }
   .avatar-card, .game-context, .quick-actions, .settings { min-width: 220px; }
+}
+
+/* ---------- Full-screen "Call Sarah" mode ---------- */
+
+.call-overlay {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 50% 20%, #251f45, #08070f 75%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  z-index: 100;
+  animation: fade-in 0.2s ease;
+}
+
+.call-overlay[hidden] {
+  display: none;
+}
+
+.call-avatar-slot {
+  width: 260px;
+  height: 260px;
+}
+
+.call-avatar-slot .avatar {
+  width: 260px;
+  height: 260px;
+}
+
+.call-status {
+  color: var(--muted);
+  font-size: 14px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.call-caption {
+  max-width: 560px;
+  text-align: center;
+  font-size: 19px;
+  line-height: 1.5;
+  color: var(--text);
+  min-height: 30px;
+  padding: 0 24px;
+}
+
+.call-controls {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.call-icon-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--panel-2);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.call-icon-btn.muted {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.end-call-btn {
+  background: linear-gradient(135deg, #ff5c7a, #ff8a5c);
+  color: #fff;
+  border: none;
+  border-radius: 26px;
+  padding: 0 28px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.call-text-fallback {
+  display: flex;
+  gap: 8px;
+  width: min(420px, 90vw);
+  margin-top: 6px;
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 8px;
+}
+
+.call-text-fallback input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  padding: 6px;
+}
+
+.call-text-fallback input:focus {
+  outline: none;
 }

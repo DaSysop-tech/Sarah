@@ -10,6 +10,17 @@ out loud with a real voice.
 - **Voice chat, both ways** — talk to Sarah hands-free with your microphone
   (Web Speech API) and hear her reply out loud (OpenAI text-to-speech, with
   an automatic browser-voice fallback if no API key is configured).
+- **A live, reactive avatar** — Sarah blinks on her own, and her expression
+  visibly reacts to the conversation: a colored ring, eyebrows, and mouth
+  shape change between happy, excited, comforting, caring, and curious
+  moods (with a quick "pop" animation on every change), and her mouth
+  animates in sync with her voice while she talks.
+- **A dedicated "Call Sarah" mode** — a full-screen call view with a large
+  animated avatar, live captions, a mute button, and a text fallback for
+  when a mic isn't available — modeled after companion apps like Kindroid's
+  voice/video call screens.
+- **Proactive check-ins** — if you go quiet during a call, Sarah will
+  speak up on her own after a bit, instead of just sitting there.
 - **Loving, gamer-companion personality** — warm, playful, and supportive;
   celebrates victories, comforts defeats, and keeps a conversation going.
 - **Game-aware** — tell her what you're playing and she'll reference it
@@ -53,13 +64,16 @@ automatically.
 ## How it works
 
 - `server/index.js` — Express server. Exposes `/api/chat` (conversation,
-  with in-memory per-session history), `/api/tts` (OpenAI speech synthesis),
-  and `/api/reset`.
-- `server/persona.js` — Sarah's personality: the LLM system prompt, plus a
+  with in-memory per-session history and an `emotion` tag on every reply),
+  `/api/tts` (OpenAI speech synthesis), `/api/proactive-line` (used for
+  call-mode check-ins), and `/api/reset`.
+- `server/persona.js` — Sarah's personality: the LLM system prompt, an
+  emotion classifier shared by the AI and fallback paths, and the
   rule-based fallback responder used when no API key is configured.
-- `public/` — the front-end: a dark, gamer-themed chat UI with a mic button
-  for continuous hands-free voice chat and automatic spoken playback of
-  Sarah's replies.
+- `public/` — the front-end: a dark, gamer-themed chat UI with an animated,
+  mood-reactive avatar, a mic button for continuous hands-free voice chat,
+  a full-screen call mode, and automatic spoken playback of Sarah's
+  replies.
 
 ## Notes
 
