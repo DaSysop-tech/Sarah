@@ -15,10 +15,19 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 
 const PORT = process.env.PORT || 3000;
-const CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || "gpt-4o-mini";
+// gpt-4.1-mini is a solid, fast, conversational default that works with the
+// classic Chat Completions params below (temperature + max_tokens). Newer
+// reasoning-tier models (gpt-5.6-*, gpt-6-*, o-series) use different params
+// (no temperature, max_completion_tokens instead of max_tokens) — if you set
+// OPENAI_CHAT_MODEL to one of those for an even smarter Sarah, isReasoningModel()
+// below automatically adapts the request so it still works.
+const CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || "gpt-4.1-mini";
 const TTS_MODEL = process.env.OPENAI_TTS_MODEL || "gpt-4o-mini-tts";
 const TTS_VOICE = process.env.OPENAI_TTS_VOICE || "shimmer";
-const MAX_HISTORY_MESSAGES = 20;
+// A real conversation needs real memory — keep enough recent turns that
+// Sarah can reference things you said a few minutes ago, not just the last
+// couple of lines.
+const MAX_HISTORY_MESSAGES = 40;
 
 app.use(cors());
 app.use(express.json({ limit: "1mb" }));
@@ -33,6 +42,14 @@ function getSession(sessionId) {
     sessions.set(id, { history: [], gameContext: "" });
   }
   return { id, session: sessions.get(id) };
+}
+
+// Reasoning-tier models (OpenAI's gpt-5.6 family, gpt-6-*, and the o-series)
+// reject `temperature` and use `max_completion_tokens` instead of
+// `max_tokens`. Detecting them lets Sarah support either a classic chat
+// model (the default) or a newer reasoning model, just by changing the env var.
+function isReasoningModel(model) {
+  return /^(o\d|gpt-5(\.\d+)?(-|$)|gpt-6)/.test(model);
 }
 
 function activeVoiceProvider() {
@@ -76,14 +93,19 @@ app.post("/api/chat", async (req, res) => {
     const client = getOpenAiClient();
     if (client) {
       try {
+        const reasoning = isReasoningModel(CHAT_MODEL);
         const completion = await client.chat.completions.create({
           model: CHAT_MODEL,
           messages: [
             { role: "system", content: buildSystemPrompt(session.gameContext) },
             ...session.history.slice(-MAX_HISTORY_MESSAGES),
           ],
-          temperature: 0.9,
-          max_tokens: 200,
+          // Reasoning-tier models fix temperature at 1 (passing a custom
+          // value errors out) and use max_completion_tokens instead of
+          // max_tokens; classic chat models use the params below as-is.
+          ...(reasoning
+            ? { max_completion_tokens: 260, reasoning_effort: "low" }
+            : { temperature: 0.9, max_tokens: 260 }),
         });
         reply = completion.choices?.[0]?.message?.content?.trim();
         usedAI = Boolean(reply);

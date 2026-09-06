@@ -69,13 +69,22 @@ which voice engine is currently active.
    its voice ID, and set `ELEVENLABS_VOICE_ID` in `.env`.
 5. Restart the server (`npm start`).
 
-### For smarter conversation: OpenAI
+### For a real, freeform conversation (not just canned lines): OpenAI
+
+Without this key, Sarah uses a small rule-based responder with a handful of
+canned lines per mood — fine for a quick demo, but it repeats itself fast.
+For an actual back-and-forth conversation that remembers what you've said
+and reacts specifically to it:
 
 1. In the same `.env`, set `OPENAI_API_KEY=sk-...`.
-2. Optionally adjust `OPENAI_CHAT_MODEL`. If you don't set
-   `ELEVENLABS_API_KEY`, Sarah's voice will also use OpenAI TTS
-   (`OPENAI_TTS_MODEL`/`OPENAI_TTS_VOICE`) instead of the browser fallback.
-3. Restart the server (`npm start`).
+2. Optionally adjust `OPENAI_CHAT_MODEL` — defaults to `gpt-4.1-mini`. For
+   an even smarter, more nuanced conversationalist, try `gpt-5.6-terra` or
+   `gpt-5.6-sol`; the server automatically adapts its request for these
+   newer reasoning-tier models.
+3. If you don't set `ELEVENLABS_API_KEY`, Sarah's voice will also use
+   OpenAI TTS (`OPENAI_TTS_MODEL`/`OPENAI_TTS_VOICE`) instead of the browser
+   fallback.
+4. Restart the server (`npm start`).
 
 If you're running this inside a Cursor Cloud Agent, add these as secrets in
 the Cursor Dashboard (Cloud Agents → Secrets) so they're injected
