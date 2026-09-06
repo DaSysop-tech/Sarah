@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sarah — Your Gaming Companion</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="avatar-card">
+        <div class="avatar" id="avatar">
+          <svg viewBox="0 0 100 100" class="avatar-face">
+            <circle cx="50" cy="50" r="48" class="avatar-ring" />
+            <circle cx="50" cy="46" r="22" fill="#ffd9c9" />
+            <path d="M28 46 a22 22 0 0 1 44 0 v6 h-8 l-4 -10 -4 6 -4 -6 -4 8 -4 -6 -4 6 -8 -4 z" fill="#7a4a2b" />
+            <circle cx="41" cy="47" r="2.6" fill="#3a2418" />
+            <circle cx="59" cy="47" r="2.6" fill="#3a2418" />
+            <path d="M42 56 q8 6 16 0" stroke="#a85a4a" stroke-width="2.4" fill="none" stroke-linecap="round" />
+            <path d="M20 44 a30 30 0 0 1 60 0" stroke="#ff7ab3" stroke-width="6" fill="none" stroke-linecap="round" />
+            <circle cx="20" cy="48" r="7" fill="#ff7ab3" />
+            <circle cx="80" cy="48" r="7" fill="#ff7ab3" />
+          </svg>
+          <span class="status-pulse" id="statusPulse"></span>
+        </div>
+        <h1>Sarah</h1>
+        <p class="status-text" id="statusText">online · here for you</p>
+      </div>
+
+      <div class="game-context">
+        <label for="gameInput">What are we playing?</label>
+        <input id="gameInput" type="text" placeholder="e.g. Valorant, Elden Ring..." autocomplete="off" />
+      </div>
+
+      <div class="quick-actions">
+        <p class="quick-label">Quick reactions</p>
+        <div class="quick-grid">
+          <button class="quick-btn" data-msg="We just won! I'm so hyped right now!">🏆 We won!</button>
+          <button class="quick-btn" data-msg="Ugh, I just died. That run is over.">💀 I died</button>
+          <button class="quick-btn" data-msg="This boss is destroying me, I need encouragement.">🔥 Send help</button>
+          <button class="quick-btn" data-msg="I'm heading out for now, talk soon.">👋 Gotta go</button>
+        </div>
+      </div>
+
+      <div class="settings">
+        <label class="toggle-row">
+          <input type="checkbox" id="voiceOutToggle" checked />
+          <span>Speak replies out loud</span>
+        </label>
+        <button id="resetBtn" class="ghost-btn">Reset conversation</button>
+      </div>
+    </aside>
+
+    <main class="chat-panel">
+      <div class="chat-log" id="chatLog"></div>
+
+      <div class="composer">
+        <button id="micBtn" class="mic-btn" title="Push to talk / toggle voice chat" aria-label="Toggle voice chat">
+          <svg viewBox="0 0 24 24" width="22" height="22">
+            <path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/>
+          </svg>
+        </button>
+        <input id="textInput" type="text" placeholder="Say something to Sarah..." autocomplete="off" />
+        <button id="sendBtn" class="send-btn">Send</button>
+      </div>
+      <p class="hint" id="hint">Tap the mic to talk hands-free, like real voice chat.</p>
+    </main>
+  </div>
+
+  <audio id="ttsAudio" hidden></audio>
+  <script src="app.js"></script>
+</body>
+</html>

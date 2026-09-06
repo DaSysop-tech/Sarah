@@ -1,0 +1,323 @@
+:root {
+  --bg: #0d0f1a;
+  --panel: #151827;
+  --panel-2: #1b1f33;
+  --accent: #ff7ab3;
+  --accent-2: #7c6bff;
+  --text: #eef0ff;
+  --muted: #9aa0c3;
+  --bubble-user: #3a3f66;
+  --bubble-sarah: linear-gradient(135deg, #ff7ab3, #7c6bff);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: radial-gradient(circle at top right, #221d3d, var(--bg) 60%);
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+.app {
+  display: flex;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 300px;
+  min-width: 260px;
+  background: var(--panel);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.avatar-card {
+  text-align: center;
+}
+
+.avatar {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 10px;
+}
+
+.avatar-face {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 18px rgba(255, 122, 179, 0.35));
+}
+
+.avatar-ring {
+  fill: #201c38;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.status-pulse {
+  position: absolute;
+  bottom: 2px;
+  right: 6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #33d17a;
+  border: 3px solid var(--panel);
+  transition: background 0.2s ease;
+}
+
+.status-pulse.speaking {
+  background: var(--accent);
+  animation: pulse 0.9s infinite;
+}
+
+.status-pulse.listening {
+  background: var(--accent-2);
+  animation: pulse 0.7s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 122, 179, 0.6); }
+  70% { box-shadow: 0 0 0 8px rgba(255, 122, 179, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 122, 179, 0); }
+}
+
+.avatar-card h1 {
+  margin: 4px 0 2px;
+  font-size: 22px;
+}
+
+.status-text {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.game-context label,
+.quick-label {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.game-context input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.game-context input:focus {
+  outline: 2px solid var(--accent-2);
+}
+
+.quick-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.quick-btn {
+  background: var(--panel-2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.15s ease;
+}
+
+.quick-btn:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.settings {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.ghost-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--muted);
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.ghost-btn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.chat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+}
+
+.chat-log {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 8px 12px;
+}
+
+.bubble {
+  max-width: 60%;
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 14.5px;
+  line-height: 1.4;
+  animation: fade-in 0.15s ease;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.bubble.user {
+  align-self: flex-end;
+  background: var(--bubble-user);
+  border-bottom-right-radius: 4px;
+}
+
+.bubble.sarah {
+  align-self: flex-start;
+  background: var(--bubble-sarah);
+  border-bottom-left-radius: 4px;
+  color: #1a1330;
+}
+
+.bubble.system {
+  align-self: center;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.bubble.typing {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.bubble.typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #1a1330;
+  opacity: 0.6;
+  animation: bounce 1s infinite;
+}
+
+.bubble.typing span:nth-child(2) { animation-delay: 0.15s; }
+.bubble.typing span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-4px); }
+}
+
+.composer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--panel);
+  border-radius: 14px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.composer input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 15px;
+  padding: 8px 6px;
+}
+
+.composer input:focus {
+  outline: none;
+}
+
+.send-btn {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mic-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--panel-2);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mic-btn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.mic-btn.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(255, 122, 179, 0.2);
+}
+
+.hint {
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  margin: 8px 0 0;
+}
+
+@media (max-width: 720px) {
+  .app { flex-direction: column; }
+  .sidebar { width: 100%; flex-direction: row; overflow-x: auto; }
+  .avatar-card, .game-context, .quick-actions, .settings { min-width: 220px; }
+}
