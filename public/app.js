@@ -51,7 +51,7 @@
   // ---------- Avatar style (Human / Anthro) ----------
 
   const STYLE_KEY = "sarah_avatar_style";
-  let avatarStyle = localStorage.getItem(STYLE_KEY) || "human";
+  let avatarStyle = localStorage.getItem(STYLE_KEY) || "anthro";
 
   function applyAvatarStyle(style) {
     avatarStyle = style;
@@ -68,6 +68,36 @@
     const btn = e.target.closest(".style-btn");
     if (btn) applyAvatarStyle(btn.dataset.style);
   });
+
+  // ---------- Parallax tilt: gives the photo a sense of weight/depth ----------
+  // She's a flat photo, not a rigged 3D model, so there's no literal physics
+  // simulation — but this pointer-driven tilt (combined with the idle sway in
+  // the "breathe" animation) is the most convincing sense of physical presence
+  // we can get out of a 2D image, and it responds live instead of just looping.
+
+  const MAX_TILT_DEG = 6;
+
+  function attachParallax(stageEl) {
+    if (!stageEl) return;
+    const photo = stageEl.querySelector(".companion-photo");
+    if (!photo) return;
+
+    stageEl.addEventListener("mousemove", (e) => {
+      const rect = stageEl.getBoundingClientRect();
+      const px = (e.clientX - rect.left) / rect.width - 0.5;
+      const py = (e.clientY - rect.top) / rect.height - 0.5;
+      photo.style.setProperty("--tilt-y", `${(px * MAX_TILT_DEG).toFixed(2)}deg`);
+      photo.style.setProperty("--tilt-x", `${(-py * MAX_TILT_DEG).toFixed(2)}deg`);
+    });
+
+    stageEl.addEventListener("mouseleave", () => {
+      photo.style.setProperty("--tilt-x", "0deg");
+      photo.style.setProperty("--tilt-y", "0deg");
+    });
+  }
+
+  attachParallax(document.getElementById("stage"));
+  attachParallax(document.getElementById("callStage"));
 
   // ---------- Living avatar: mood aura, particles, breathing, lip-synced voice ----------
 
