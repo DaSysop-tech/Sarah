@@ -375,6 +375,37 @@ html, body {
   border-color: var(--accent);
 }
 
+.voice-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.voice-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6b7094;
+  flex-shrink: 0;
+  transition: background 0.3s ease;
+}
+
+.voice-status[data-provider="elevenlabs"] .voice-status-dot {
+  background: #37e0a4;
+  box-shadow: 0 0 6px rgba(55, 224, 164, 0.7);
+}
+
+.voice-status[data-provider="openai"] .voice-status-dot {
+  background: #ffc540;
+}
+
+.voice-status[data-provider="browser"] .voice-status-dot {
+  background: #ff6b6b;
+}
+
 .chat-log {
   flex: 1;
   min-height: 120px;

@@ -6,6 +6,8 @@
   const gameInput = document.getElementById("gameInput");
   const voiceOutToggle = document.getElementById("voiceOutToggle");
   const resetBtn = document.getElementById("resetBtn");
+  const voiceStatus = document.getElementById("voiceStatus");
+  const voiceStatusText = document.getElementById("voiceStatusText");
   const statusText = document.getElementById("statusText");
   const statusPulse = document.getElementById("statusPulse");
   const ttsAudio = document.getElementById("ttsAudio");
@@ -558,6 +560,28 @@
     }
   });
 
+  // ---------- Voice engine status badge ----------
+
+  const VOICE_PROVIDER_LABELS = {
+    elevenlabs: "ElevenLabs — breathy, human voice",
+    openai: "OpenAI TTS",
+    browser: "Browser voice (basic) — add an ELEVENLABS_API_KEY for a real voice",
+  };
+
+  async function checkVoiceEngine() {
+    try {
+      const res = await fetch("/api/health");
+      const data = await res.json();
+      const provider = data.voiceProvider || "browser";
+      voiceStatusText.textContent = `Voice: ${VOICE_PROVIDER_LABELS[provider] || provider}`;
+      voiceStatus.dataset.provider = provider;
+    } catch (err) {
+      voiceStatusText.textContent = "Voice: unable to check status";
+      voiceStatus.dataset.provider = "browser";
+    }
+  }
+
+  checkVoiceEngine();
   applyAvatarStyle(avatarStyle);
   greet();
 })();

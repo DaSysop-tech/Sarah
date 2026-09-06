@@ -7,6 +7,7 @@ import crypto from "node:crypto";
 
 import { buildSystemPrompt, generateFallbackReply, classifyEmotion, pickProactiveLine } from "./persona.js";
 import { getOpenAiClient, isAiEnabled } from "./openaiClient.js";
+import { isElevenLabsEnabled, synthesizeWithElevenLabs } from "./elevenLabsClient.js";
 
 dotenv.config();
 
@@ -34,8 +35,20 @@ function getSession(sessionId) {
   return { id, session: sessions.get(id) };
 }
 
+function activeVoiceProvider() {
+  if (isElevenLabsEnabled()) return "elevenlabs";
+  if (isAiEnabled()) return "openai";
+  return "browser";
+}
+
 app.get("/api/health", (req, res) => {
-  res.json({ ok: true, aiEnabled: isAiEnabled(), ttsEnabled: isAiEnabled() });
+  const voiceProvider = activeVoiceProvider();
+  res.json({
+    ok: true,
+    aiEnabled: isAiEnabled(),
+    ttsEnabled: voiceProvider !== "browser",
+    voiceProvider,
+  });
 });
 
 app.post("/api/chat", async (req, res) => {
@@ -96,12 +109,26 @@ app.post("/api/chat", async (req, res) => {
 });
 
 app.post("/api/tts", async (req, res) => {
-  try {
-    const { text } = req.body || {};
-    if (!text || typeof text !== "string" || !text.trim()) {
-      return res.status(400).json({ error: "text is required" });
-    }
+  const { text } = req.body || {};
+  if (!text || typeof text !== "string" || !text.trim()) {
+    return res.status(400).json({ error: "text is required" });
+  }
 
+  // Prefer ElevenLabs for a genuinely breathy, human voice; fall back to
+  // OpenAI TTS if that's the only key configured, then to a 501 so the
+  // browser's own speechSynthesis can take over client-side.
+  if (isElevenLabsEnabled()) {
+    try {
+      const buffer = await synthesizeWithElevenLabs(text);
+      res.set("Content-Type", "audio/mpeg");
+      res.set("X-Voice-Provider", "elevenlabs");
+      return res.send(buffer);
+    } catch (err) {
+      console.error("ElevenLabs TTS error, falling back:", err.message);
+    }
+  }
+
+  try {
     const client = getOpenAiClient();
     if (!client) {
       return res.status(501).json({ error: "tts_unavailable" });
@@ -115,6 +142,7 @@ app.post("/api/tts", async (req, res) => {
 
     const buffer = Buffer.from(await speech.arrayBuffer());
     res.set("Content-Type", "audio/mpeg");
+    res.set("X-Voice-Provider", "openai");
     res.send(buffer);
   } catch (err) {
     console.error("TTS endpoint error:", err.message);
@@ -140,4 +168,12 @@ app.post("/api/reset", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Sarah is listening on http://localhost:${PORT}`);
   console.log(`AI conversation: ${isAiEnabled() ? "enabled (OpenAI)" : "disabled — using warm fallback responses"}`);
+  const provider = activeVoiceProvider();
+  const providerLabel =
+    provider === "elevenlabs"
+      ? "enabled (ElevenLabs — breathy, human voice)"
+      : provider === "openai"
+      ? "enabled (OpenAI TTS)"
+      : "disabled — using the browser's built-in voice";
+  console.log(`Voice: ${providerLabel}`);
 });

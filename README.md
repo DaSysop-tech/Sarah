@@ -8,13 +8,15 @@ out loud with a real voice.
 ## Features
 
 - **Voice chat, both ways** — talk to Sarah hands-free with your microphone
-  (Web Speech API) and hear her reply out loud (OpenAI text-to-speech, with
-  an automatic browser-voice fallback if no API key is configured).
-- **A live, reactive avatar** — Sarah blinks on her own, and her expression
-  visibly reacts to the conversation: a colored ring, eyebrows, and mouth
-  shape change between happy, excited, comforting, caring, and curious
-  moods (with a quick "pop" animation on every change), and her mouth
-  animates in sync with her voice while she talks.
+  (Web Speech API) and hear her reply with a real, breathy, human-sounding
+  voice via ElevenLabs (with OpenAI TTS and then the browser's own voice as
+  automatic fallbacks if no API keys are configured).
+- **A photorealistic, living avatar** — a large, expressive photo of Sarah
+  (with a switchable anthro/catgirl style) instead of a static illustration.
+  A mood-driven glowing aura shifts color with her emotion (happy, excited,
+  comforting, curious), she reacts with a particle burst and a "pop"
+  animation when you tap her photo or her mood changes, and her voice
+  visibly drives a waveform/lip-sync effect while she talks.
 - **A dedicated "Call Sarah" mode** — a full-screen call view with a large
   animated avatar, live captions, a mute button, and a text fallback for
   when a mic isn't available — modeled after companion apps like Kindroid's
@@ -28,8 +30,9 @@ out loud with a real voice.
 - **Quick reactions** — one-tap buttons for common in-game moments ("We
   won!", "I died", "Send help") so you don't have to stop and type.
 - **Works without any API key** — Sarah ships with a warm rule-based
-  responder so the app is fully usable out of the box; add an OpenAI key to
-  unlock smarter, freeform conversation and natural spoken replies.
+  responder and the browser's built-in voice, so the app is fully usable
+  out of the box; add an OpenAI key for smarter conversation and/or an
+  ElevenLabs key for a genuinely natural, breathy voice.
 
 ## Getting started
 
@@ -42,38 +45,60 @@ npm start
 Then open [http://localhost:3000](http://localhost:3000) in Chrome (voice
 input currently requires a Chromium-based browser).
 
-## Enabling full AI conversation + spoken voice
+## Enabling full AI conversation + a real, breathy voice
 
-By default (no API key), Sarah uses a friendly rule-based responder and
-your browser's built-in speech synthesis, so everything works immediately.
+By default (no API keys), Sarah uses a friendly rule-based responder and
+your browser's built-in speech synthesis, so everything works immediately
+— though the browser voice is the least natural-sounding option.
 
-For real freeform conversation and a natural TTS voice, add an OpenAI API
-key:
+A small badge under "Speak replies out loud" in the sidebar always shows
+which voice engine is currently active.
 
-1. Copy `.env.example` to `.env`.
-2. Set `OPENAI_API_KEY=sk-...`.
-3. Optionally adjust `OPENAI_CHAT_MODEL`, `OPENAI_TTS_MODEL`, and
-   `OPENAI_TTS_VOICE` (voice options: `alloy`, `echo`, `fable`, `onyx`,
-   `nova`, `shimmer`, `coral`, `sage`).
-4. Restart the server (`npm start`).
+### For a real, breathy human voice (recommended): ElevenLabs
 
-If you're running this inside a Cursor Cloud Agent, add `OPENAI_API_KEY` as
-a secret in the Cursor Dashboard (Cloud Agents → Secrets) so it's injected
-automatically.
+1. Create a free API key at [elevenlabs.io](https://elevenlabs.io).
+2. Copy `.env.example` to `.env` and set `ELEVENLABS_API_KEY=...`.
+3. That's it — Sarah defaults to ElevenLabs' own "Sarah" voice (soft,
+   young, breathy-leaning female) and low-latency `eleven_turbo_v2_5`
+   model, tuned via `ELEVENLABS_STABILITY`/`ELEVENLABS_STYLE` for a more
+   expressive, breathy delivery.
+4. Want a different voice? Browse
+   [elevenlabs.io/app/voice-library](https://elevenlabs.io/app/voice-library)
+   and filter by "Breathy" (e.g. "Mira", "Karla", "Filiz", "Diana" are all
+   tagged breathy/soft). Click "Add to my voices" on the one you like, copy
+   its voice ID, and set `ELEVENLABS_VOICE_ID` in `.env`.
+5. Restart the server (`npm start`).
+
+### For smarter conversation: OpenAI
+
+1. In the same `.env`, set `OPENAI_API_KEY=sk-...`.
+2. Optionally adjust `OPENAI_CHAT_MODEL`. If you don't set
+   `ELEVENLABS_API_KEY`, Sarah's voice will also use OpenAI TTS
+   (`OPENAI_TTS_MODEL`/`OPENAI_TTS_VOICE`) instead of the browser fallback.
+3. Restart the server (`npm start`).
+
+If you're running this inside a Cursor Cloud Agent, add these as secrets in
+the Cursor Dashboard (Cloud Agents → Secrets) so they're injected
+automatically — no `.env` file needed.
 
 ## How it works
 
 - `server/index.js` — Express server. Exposes `/api/chat` (conversation,
   with in-memory per-session history and an `emotion` tag on every reply),
-  `/api/tts` (OpenAI speech synthesis), `/api/proactive-line` (used for
-  call-mode check-ins), and `/api/reset`.
+  `/api/tts` (speech synthesis, trying ElevenLabs then OpenAI before
+  giving up so the browser can take over), `/api/health` (reports which
+  voice engine is active), `/api/proactive-line` (used for call-mode
+  check-ins), and `/api/reset`.
 - `server/persona.js` — Sarah's personality: the LLM system prompt, an
   emotion classifier shared by the AI and fallback paths, and the
   rule-based fallback responder used when no API key is configured.
-- `public/` — the front-end: a dark, gamer-themed chat UI with an animated,
-  mood-reactive avatar, a mic button for continuous hands-free voice chat,
-  a full-screen call mode, and automatic spoken playback of Sarah's
-  replies.
+- `server/elevenLabsClient.js` — ElevenLabs text-to-speech integration.
+- `server/openaiClient.js` — OpenAI client wrapper, used for chat and as a
+  secondary TTS option.
+- `public/` — the front-end: a dark, gamer-themed chat UI with a
+  photorealistic, mood-reactive avatar, a mic button for continuous
+  hands-free voice chat, a full-screen call mode, and automatic spoken
+  playback of Sarah's replies.
 
 ## Notes
 
